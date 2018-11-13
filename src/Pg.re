@@ -1,3 +1,5 @@
+include Response;
+
 type pgClient;
 
 [@bs.deriving abstract]
@@ -27,9 +29,12 @@ external createQuery:
 let client = (~host=?, ~port=?, ~user=?, ~password=?, ~database=?, _) =>
   config(~host?, ~port?, ~user?, ~password?, ~database?, ())->createClient;
 
-let query = (client, sql) =>
+let query = (~client, ~query, ~params=None, ()) => {
+  let values = Belt.Option.getWithDefault(params, [||]);
+
   Js.Promise.(
-    client->createQuery(sql, [||])
-    |> then_(res => Response.handleResponse(res) |> resolve)
-    |> catch(err => `Error(Response.handleError(err)) |> resolve)
+    client->createQuery(query, values)
+    |> then_(res => handleResponse(res) |> resolve)
+    |> catch(err => Error(handleError(err)) |> resolve)
   );
+};
