@@ -24,7 +24,7 @@ Pg.query(client, "select * from users limit 10")
            );
 
        Js.log(rows);
-     | `Error => Js.log("error")
+     | `Error(err) => Js.log2("error", err)
      };
 
      client->Pg.close |> ignore;

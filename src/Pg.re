@@ -31,4 +31,5 @@ let query = (client, sql) =>
   Js.Promise.(
     client->createQuery(sql, [||])
     |> then_(res => Response.handleResponse(res) |> resolve)
+    |> catch(err => `Error(Response.handleError(err)) |> resolve)
   );
