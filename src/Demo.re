@@ -1,17 +1,38 @@
 open Js.Promise;
+open BsPostgres.Response.Select;
 
 let client = Pg.client(~host="localhost", ~port=5432, ());
 
-client->Pg.connect |> then_(_ => resolve(true));
-
-Pg.query(client, "select * from users")
-|> then_(res => {
-     switch (res) {
-     | `Select(value) => Js.log2("value", value)
-     | `Error => Js.log("error")
-     };
-
+client->Pg.connect
+|> then_(_ => resolve(true))
+|> catch(err => {
+     Js.log(err);
      resolve(true);
    });
 
-client->Pg.close |> then_(_ => resolve(true));
+type user = {city: option(string)};
+
+Pg.query(client, "select * from users limit 10")
+|> then_(res => {
+     switch (res) {
+     | `Select(select) =>
+       Js.log2("select", select.rows);
+       let rows =
+         select.rows
+         ->Belt.Array.map(item =>
+             Json.Decode.{city: item |> optional(field("city", string))}
+           );
+
+       Js.log(rows);
+     | `Error => Js.log("error")
+     };
+
+     client->Pg.close |> ignore;
+
+     resolve(true);
+   })
+|> catch(err => {
+     Js.log(err);
+     client->Pg.close |> ignore;
+     resolve(true);
+   });

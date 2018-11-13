@@ -20,16 +20,15 @@ external createClient: config => pgClient = "Client";
 [@bs.send] external connect: pgClient => Js.Promise.t(unit) = "";
 [@bs.send] external close: pgClient => Js.Promise.t(unit) = "end";
 [@bs.send]
-external createQuery: (pgClient, string) => Js.Promise.t(Js.Json.t) = "";
+external createQuery:
+  (pgClient, string, array(string)) => Js.Promise.t(Js.Json.t) =
+  "query";
 
 let client = (~host=?, ~port=?, ~user=?, ~password=?, ~database=?, _) =>
   config(~host?, ~port?, ~user?, ~password?, ~database?, ())->createClient;
 
 let query = (client, sql) =>
   Js.Promise.(
-    client->createQuery(sql)
-    |> then_(res => {
-         Js.log2("queryResp", res);
-         Response.handleResponse(res) |> resolve;
-       })
+    client->createQuery(sql, [||])
+    |> then_(res => Response.handleResponse(res) |> resolve)
   );
