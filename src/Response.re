@@ -7,16 +7,22 @@ module Select = {
     Json.Decode.{rows: json |> field("rows", array(rowsGet))};
 };
 
+module Insert = {
+  type t = {rowCount: int};
+
+  let make = json => Json.Decode.{rowCount: json |> field("rowCount", int)};
+};
+
 type t =
   | Error(Js.String.t)
   | Select(Select.t)
-  | Insert;
+  | Insert(Insert.t);
 
 let handleResponse = response =>
   Json.Decode.(
     switch (response |> field("command", string)) {
     | "SELECT" => Select(Select.make(response))
-    | "INSERT" => Insert
+    | "INSERT" => Insert(Insert.make(response))
     | _ => Error("err")
     }
   );

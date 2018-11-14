@@ -5,10 +5,10 @@ let client = Pg.client(~host="localhost", ~port=5432, ());
 
 client->Pg.connect |> ignore;
 
-type user = {city: option(string)};
+type user = {city: string};
 
 let mapRows = item =>
-  Json.Decode.{city: item |> optional(field("city", string))};
+  Json.Decode.{city: item |> withDefault("", field("city", string))};
 
 Pg.query(~client, ~query="select * from users limit 10", ())
 |> then_(res => {
@@ -19,7 +19,8 @@ Pg.query(~client, ~query="select * from users limit 10", ())
        /* Log it */
        let rows = select.rows->Belt.Array.map(mapRows);
        Js.log(rows);
-     | _ => Js.log("Not select")
+     | Insert(insert) => Js.log2("insert", insert.rowCount)
+     | something => Js.log2("Not select", something)
      };
 
      client->Pg.close |> ignore;
